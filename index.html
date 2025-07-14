@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Credit Card Generator</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #121212;
+      color: #ddd;
+      font-family: 'Roboto', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      margin: 0;
+      min-height: 100vh;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .card-generator {
+      background: #1e1e1e;
+      padding: 30px;
+      border-radius: 12px;
+      border: 1px solid #333;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      font-size: 0.95rem;
+      color: #ccc;
+      text-align: left;
+    }
+
+    select, button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 20px;
+      border-radius: 6px;
+      font-size: 1rem;
+      background: #2b2b2b;
+      border: 1px solid #444;
+      color: #eee;
+    }
+
+    select:focus, button:focus {
+      outline: none;
+      border-color: #007acc;
+    }
+
+    button {
+      background: #007acc;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #005fa3;
+    }
+
+    .output {
+      background: #222;
+      border-radius: 8px;
+      padding: 15px 12px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .output label {
+      margin: 0;
+      color: #aaa;
+      flex: 1;
+    }
+
+    .output span {
+      user-select: all;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: 600;
+      color: #00bcd4;
+      text-align: right;
+      flex: 2;
+    }
+
+    .copy-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px;
+      background: #333;
+      border: 1px solid #444;
+      color: #ccc;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .copy-btn:hover {
+      background: #444;
+    }
+
+    .footer {
+      margin-top: 40px;
+      font-size: 0.85rem;
+      color: #777;
+      text-align: center;
+      max-width: 500px;
+    }
+
+    .footer strong {
+      color: #c33;
+    }
+
+    .copy-icon {
+      display: inline-block;
+      margin-left: 8px;
+      cursor: pointer;
+      color: #999;
+    }
+
+    .copy-icon:hover {
+      color: #00bcd4;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Credit Card Generator</h1>
+
+  <div class="card-generator">
+    <label for="cardType">Select Card Type:</label>
+    <select id="cardType">
+      <option value="visa">Visa (Starts with 4)</option>
+      <option value="mastercard">MasterCard (Starts with 5)</option>
+    </select>
+
+    <button onclick="generateCardDetails()">Generate Card Details</button>
+
+    <div class="output">
+      <label>Card Number:</label>
+      <span id="cardNumber">-</span>
+    </div>
+    <button class="copy-btn" onclick="copyText('cardNumber')">Copy</button>
+
+    <div class="output">
+      <label>Expiry Date:</label>
+      <span id="expiryDate">-</span>
+    </div>
+    <button class="copy-btn" onclick="copyText('expiryDate')">Copy</button>
+
+    <div class="output">
+      <label>CVV:</label>
+      <span id="cvv">-</span>
+    </div>
+    <button class="copy-btn" onclick="copyText('cvv')">Copy</button>
+  </div>
+
+  <div class="footer">
+    <p><strong>Disclaimer:</strong> This tool generates fake card data for software testing and education only. Do not use it for real payments.</p>
+    <p style="margin-top: 20px;">
+      Designed with ❤️ and a touch of ☕ by
+      <a href="https://github.com/monhacer" target="_blank" style="color: #66cfff; text-decoration: none;">aioexp</a>
+    </p>
+  </div>
+
+  <script>
+    function calculateLuhnDigit(digits) {
+      let sum = 0;
+      let shouldDouble = true;
+
+      for (let i = digits.length - 1; i >= 0; i--) {
+        let digit = parseInt(digits[i], 10);
+        if (shouldDouble) {
+          digit *= 2;
+          if (digit > 9) digit -= 9;
+        }
+        sum += digit;
+        shouldDouble = !shouldDouble;
+      }
+
+      return (10 - (sum % 10)) % 10;
+    }
+
+    function generateExpiryDate() {
+      const today = new Date();
+      const maxFutureTime = 1000 * 60 * 60 * 24 * 365 * 5;
+      const futureTime = today.getTime() + Math.floor(Math.random() * maxFutureTime);
+      const futureDate = new Date(futureTime);
+      const month = (futureDate.getMonth() + 1).toString().padStart(2, '0');
+      const year = futureDate.getFullYear();
+      return `${month}/${year}`;
+    }
+
+    function generateCVV() {
+      return Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    }
+
+    function generateCardDetails() {
+      const cardType = document.getElementById('cardType').value;
+      const digits = [];
+
+      if (cardType === 'visa') {
+        digits.push(4);
+      } else if (cardType === 'mastercard') {
+        digits.push(5);
+      } else {
+        digits.push(Math.floor(Math.random() * 9) + 1);
+      }
+
+      while (digits.length < 15) {
+        digits.push(Math.floor(Math.random() * 10));
+      }
+
+      const checkDigit = calculateLuhnDigit([...digits].reverse());
+      digits.push(checkDigit);
+
+      const cardNumber = digits.join('').match(/.{1,4}/g).join(' ');
+      const expiry = generateExpiryDate();
+      const cvv = generateCVV();
+
+      document.getElementById('cardNumber').textContent = cardNumber;
+      document.getElementById('expiryDate').textContent = expiry;
+      document.getElementById('cvv').textContent = cvv;
+    }
+
+    function copyText(id) {
+      const text = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        alert(`Copied "${text}" to clipboard!`);
+      }).catch(() => {
+        alert('Failed to copy. Please copy manually.');
+      });
+    }
+  </script>
+</body>
+</html>
